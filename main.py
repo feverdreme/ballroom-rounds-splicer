@@ -1,14 +1,53 @@
 import re
-from typing import Generator, Iterable
-import subprocess
 import os
+import argparse
+from typing import Generator
+from src.download import download_sequential_links
 from src.song import Song
+from src.audio_processing import ffmpeg_trim, ffmpeg_concat
 
-def parse_arguments() -> tuple[str, str]:
-    # TODO: Use argparse to customize these
-    input_path = "test/sources.txt"
-    output_path = "test/artifacts"
-    return input_path, output_path
+from dataclasses import dataclass
+
+@dataclass
+class Arguments:
+    help: bool
+    sources: str
+    output_path: str
+    artifacts_dir: str
+    download: bool
+    multithreaded: bool
+
+def parse_arguments() -> Arguments:
+    """
+    Must handle the following usage:
+    -s, --sources The path to the sources file. Default is "test/sources.txt".
+    -a, --artifacts_dir The path of artifacts and eventual output. Default is "test/artifacts".
+    -d, --download A boolean variable whether to download the songs from sources.
+    -m, --multithreaded A boolean variable whether to multithread downloading and processing audio.
+    """
+    parser = argparse.ArgumentParser(description="Process songs from a source file and optional download/processing options.")
+    parser.add_argument('-s', '--sources', type=str, default='test/sources.txt',
+                        help='The path to the sources file.')
+    parser.add_argument('-a', '--artifacts_dir', type=str, default='test/artifacts',
+                        help='The path of artifacts and eventual output.')
+    parser.add_argument('-d', '--download', action='store_true',
+                        help='Whether to download the songs from sources.')
+    parser.add_argument('-m', '--multithreaded', action='store_true',
+                        help='Whether to multithread downloading and processing audio.')
+
+    args = parser.parse_args()
+
+    # Determine output file path based on artifacts_dir
+    output_path = os.path.join(args.artifacts_dir, "output.mp3")
+
+    return Arguments(
+        help=args.help,
+        sources=args.sources,
+        output_path=output_path,
+        artifacts_dir=args.artifacts_dir,
+        download=args.download,
+        multithreaded=args.multithreaded
+    )
 
 def parse_source_file(source: str) -> Generator[Song | None, None, None]:
     """
@@ -35,7 +74,7 @@ def parse_source_file(source: str) -> Generator[Song | None, None, None]:
     Rumba: https://www.youtube.com/watch?v=dQw4w9WgXcQ
     ```
     """
-    
+
     spotify_youtube_regex = r'(?:https?:\/\/)?(?:www\.)?(?:(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)[\w\-]+|(?:open\.)?spotify\.com\/(?:track|album|playlist|artist|episode|show)\/[\w]+|spotify\.link\/[\w]+|spoti\.fi\/[\w]+)'
 
     with open(source, "r") as file:
@@ -52,103 +91,15 @@ def parse_source_file(source: str) -> Generator[Song | None, None, None]:
             else:
                 yield None
 
-def download_song(song: Song) -> None:
-    subprocess.run(["spotdl", 
-        "download", 
-        song.get_link(),
-        "--format",
-        "mp3",
-        "--output",
-        song.get_artifact_path().replace("mp3", "{output-ext}")
-    ])
-
-def download_sequential_links(songs: Iterable[Song | None]):
-    import threading
-
-    threads: list[threading.Thread] = []
-    for song in songs:
-        if song is None:
-            continue
-
-        thread = threading.Thread(target=download_song, args=(song,))
-        thread.start()
-        threads.append(thread)
-
-    for thread in threads:
-        thread.join()
-
-def ffmpeg_trim(songs: list[Song | None]) -> None:
-    for song in songs:
-        if song is None:
-            continue
-
-        subprocess.run([
-            "./ffmpeg",
-            "-hide_banner", "-loglevel", "error",
-            "-i", song.get_artifact_path(),
-            "-ss", "00:00:00",
-            "-t", "00:01:30",
-            "-af", "afade=t=in:st=0:d=5,afade=out:st=85:d=5",
-            "-y", # Overwrite
-            song.get_trimmed_artifact_path()
-        ])
-
-def generate_silence(output_path: str, break_duration: str = "00:00:05") -> None:
-    subprocess.run([
-        "./ffmpeg",
-        "-hide_banner", "-loglevel", "error",
-        "-f", "lavfi",
-        "-i", "anullsrc=channel_layout=stereo:sample_rate=44100",
-        "-t", break_duration,
-        "-acodec", "libmp3lame",
-        "-y",
-        output_path
-    ], check=True)
-
-def ffmpeg_concat(songs: list[Song | None], output_path: str, break_duration: str = "00:00:05") -> None:
-    """
-    Concatenate MP3 files with breaks. None entries in songs list represent breaks.
-    """
-    artifacts_dir = os.path.dirname(output_path)
-    silence_path = f"silence.mp3"
-    concat_list_path = f"{artifacts_dir}/concat_list.txt"
-    
-    generate_silence(f"{artifacts_dir}/{silence_path}")
-    
-    # Create concat file list
-    with open(concat_list_path, "w+") as f:
-        for song in songs:
-            if song is None:
-                # None represents a break
-                f.write(f"file '{silence_path}'\n")
-            else:
-                f.write(f"file '{song.get_trimmed_name()}'\n")
-    
-    # Use concat demuxer
-    subprocess.run([
-        "./ffmpeg",
-        "-hide_banner", "-loglevel", "error",
-        "-f", "concat",
-        "-safe", "0",
-        "-i", concat_list_path,
-        "-c:a", "libmp3lame",  # Re-encode instead of copy
-        "-b:a", "192k",  # Optional: set bitrate
-        "-y",
-        output_path
-    ], check=True)
-
-def clean_artifacts(audio_files: list[str]) -> None:
-    for audio_file in audio_files:
-        os.remove(audio_file)
-
 def main():
-    input_path, output_path = parse_arguments()
-    songs = list(parse_source_file(input_path))
+    cmd_args = parse_arguments()
+    songs = list(parse_source_file(cmd_args.sources))
 
-    # download_sequential_links(songs)
+    if cmd_args.download:
+        download_sequential_links(songs)
 
     ffmpeg_trim(songs)
-    ffmpeg_concat(songs, "test/artifacts/concat.mp3")
+    ffmpeg_concat(songs, f"{cmd_args.artifacts_dir}/concat.mp3")
 
 if __name__ == "__main__":
     main()
