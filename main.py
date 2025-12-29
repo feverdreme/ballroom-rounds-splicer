@@ -2,24 +2,7 @@ import re
 from typing import Generator, Iterable
 import subprocess
 import os
-
-class Song:
-    def __init__(self, link: str, index: int, artifacts_dir: str = "test/artifacts"):
-        self.link = link
-        self.index = index
-        self.artifacts_dir = artifacts_dir
-    
-    def get_link(self) -> str:
-        return self.link
-    
-    def get_artifact_path(self) -> str:
-        return f"{self.artifacts_dir}/{self.index}.mp3"
-    
-    def get_trimmed_name(self) -> str:
-        return f"{self.index}.trimmed.mp3"
-
-    def get_trimmed_artifact_path(self) -> str:
-        return f"{self.artifacts_dir}/{self.get_trimmed_name()}"
+from src.song import Song
 
 def parse_arguments() -> tuple[str, str]:
     # TODO: Use argparse to customize these
@@ -52,6 +35,7 @@ def parse_source_file(source: str) -> Generator[Song | None, None, None]:
     Rumba: https://www.youtube.com/watch?v=dQw4w9WgXcQ
     ```
     """
+    
     spotify_youtube_regex = r'(?:https?:\/\/)?(?:www\.)?(?:(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)[\w\-]+|(?:open\.)?spotify\.com\/(?:track|album|playlist|artist|episode|show)\/[\w]+|spotify\.link\/[\w]+|spoti\.fi\/[\w]+)'
 
     with open(source, "r") as file:
