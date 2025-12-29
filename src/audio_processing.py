@@ -30,14 +30,21 @@ def generate_silence(output_path: str, break_duration: str) -> None:
         output_path
     ], check=True)
 
-def ffmpeg_concat(songs: list[Song | None], artifacts_path: str, output_path: str, break_duration: str = "00:00:10") -> None:
+def seconds_to_ffpmeg_time(seconds: int) -> str:
+    hours = seconds // 3600
+    minutes = (seconds % 3600) // 60
+    secs = seconds % 60
+    return f"{hours:02}:{minutes:02}:{secs:02}"
+
+def ffmpeg_concat(songs: list[Song | None], artifacts_path: str, output_path: str, break_duration: int = 10) -> None:
     """
     Concatenate MP3 files with breaks. None entries in songs list represent breaks.
     """
     silence_path = f"silence.mp3"
     concat_list_path = f"{artifacts_path}/concat_list.txt"
     
-    generate_silence(f"{artifacts_path}/{silence_path}", break_duration)
+    break_duration_ffmpeg_time = seconds_to_ffpmeg_time(break_duration)
+    generate_silence(f"{artifacts_path}/{silence_path}", break_duration_ffmpeg_time)
     
     # Create concat file list
     with open(concat_list_path, "w+") as f:
