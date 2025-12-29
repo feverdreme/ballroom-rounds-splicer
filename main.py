@@ -10,7 +10,6 @@ from dataclasses import dataclass
 
 @dataclass
 class Arguments:
-    help: bool
     sources: str
     output_path: str
     artifacts_dir: str
@@ -30,10 +29,12 @@ def parse_arguments() -> Arguments:
                         help='The path to the sources file.')
     parser.add_argument('-a', '--artifacts_dir', type=str, default='test/artifacts',
                         help='The path of artifacts and eventual output.')
-    parser.add_argument('-d', '--download', action='store_true',
-                        help='Whether to download the songs from sources.')
-    parser.add_argument('-m', '--multithreaded', action='store_true',
-                        help='Whether to multithread downloading and processing audio.')
+    parser.add_argument('-d', '--download', action=argparse.BooleanOptionalAction,
+                        help='Whether to download the songs from sources.',
+                        default=False)
+    parser.add_argument('-m', '--multithreaded', action=argparse.BooleanOptionalAction,
+                        help='Whether to multithread downloading and processing audio.',
+                        default=False)
 
     args = parser.parse_args()
 
@@ -41,7 +42,6 @@ def parse_arguments() -> Arguments:
     output_path = os.path.join(args.artifacts_dir, "output.mp3")
 
     return Arguments(
-        help=args.help,
         sources=args.sources,
         output_path=output_path,
         artifacts_dir=args.artifacts_dir,
