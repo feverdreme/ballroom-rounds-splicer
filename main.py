@@ -20,7 +20,6 @@ class Song:
 
     def get_trimmed_artifact_path(self) -> str:
         return f"{self.artifacts_dir}/{self.get_trimmed_name()}"
-    
 
 def parse_arguments() -> tuple[str, str]:
     # TODO: Use argparse to customize these
@@ -110,15 +109,7 @@ def ffmpeg_trim(songs: list[Song | None]) -> None:
             song.get_trimmed_artifact_path()
         ])
 
-def ffmpeg_concat(songs: list[Song | None], output_path: str, break_duration: str = "00:00:05") -> None:
-    """
-    Concatenate MP3 files with breaks. None entries in songs list represent breaks.
-    """
-    artifacts_dir = os.path.dirname(output_path)
-    silence_path = f"silence.mp3"
-    concat_list_path = f"{artifacts_dir}/concat_list.txt"
-    
-    # Generate silence file
+def generate_silence(output_path: str, break_duration: str = "00:00:05") -> None:
     subprocess.run([
         "./ffmpeg",
         "-hide_banner", "-loglevel", "error",
@@ -127,8 +118,18 @@ def ffmpeg_concat(songs: list[Song | None], output_path: str, break_duration: st
         "-t", break_duration,
         "-acodec", "libmp3lame",
         "-y",
-        f"{artifacts_dir}/{silence_path}"
+        output_path
     ], check=True)
+
+def ffmpeg_concat(songs: list[Song | None], output_path: str, break_duration: str = "00:00:05") -> None:
+    """
+    Concatenate MP3 files with breaks. None entries in songs list represent breaks.
+    """
+    artifacts_dir = os.path.dirname(output_path)
+    silence_path = f"silence.mp3"
+    concat_list_path = f"{artifacts_dir}/concat_list.txt"
+    
+    generate_silence(f"{artifacts_dir}/{silence_path}")
     
     # Create concat file list
     with open(concat_list_path, "w+") as f:
