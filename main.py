@@ -3,7 +3,8 @@ import os
 import argparse
 from typing import Generator
 from src.download import download_sequential_links
-from src.song import Song
+from src.roundlist import RoundList
+from src.song import RoundBreak, Song
 from src.audio_processing import ffmpeg_trim, ffmpeg_concat
 
 from dataclasses import dataclass
@@ -40,57 +41,32 @@ def parse_arguments() -> Arguments:
         multithreaded=args.multithreaded
     )
 
-def parse_source_file(source: str) -> Generator[Song | None, None, None]:
-    """
-    Parse a source file and return a list of links.
 
-    A source file is a text file with one link per line.
-
-    Example:
-    ```
-    https://www.youtube.com/watch?v=dQw4w9WgXcQ
-    https://www.youtube.com/watch?v=dQw4w9WgXcQ
-    ```
-
-    Comments are allowed, and will be ignored. Only the links will be returned. Lines that are empty imply a break.
-
-    Example:
-    ```
-    Waltz: https://www.youtube.com/watch?v=dQw4w9WgXcQ
-    Tango: https://www.youtube.com/watch?v=dQw4w9WgXcQ
-    Foxtrot: https://www.youtube.com/watch?v=dQw4w9WgXcQ
-    Cha Cha: https://www.youtube.com/watch?v=dQw4w9WgXcQ
-
-    Jive: https://www.youtube.com/watch?v=dQw4w9WgXcQ
-    Rumba: https://www.youtube.com/watch?v=dQw4w9WgXcQ
-    ```
-    """
-
-    spotify_youtube_regex = r'(?:https?:\/\/)?(?:www\.)?(?:(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)[\w\-]+|(?:open\.)?spotify\.com\/(?:track|album|playlist|artist|episode|show)\/[\w]+|spotify\.link\/[\w]+|spoti\.fi\/[\w]+)'
-
-    with open(source, "r") as file:
-        for i, line in enumerate(file):
-            line = line.strip()
-            if line:
-                matches = re.findall(spotify_youtube_regex, line)
-                if len(matches) == 1:
-                    yield Song(link=matches[0], index=i)
-                elif len(matches) > 1:
-                    print(f"Multiple links found in line: {line}")
-                else:
-                    print(f"Invalid link: {line}")
-            else:
-                yield None
 
 def main():
     cmd_args = parse_arguments()
-    songs = list(parse_source_file(cmd_args.sources))
+    roundlist = RoundList.parse_source_file(cmd_args.sources)
 
     if cmd_args.download:
-        download_sequential_links(songs)
+        download_sequential_links(roundlist.get_songs())
 
-    ffmpeg_trim(songs)
-    ffmpeg_concat(songs, cmd_args.artifacts_dir, cmd_args.output_path)
+    for song in roundlist.get_songs():
+        ffmpeg_trim(song.get_path(), song.get_trimmed_path())
+
+    for rounditem in roundlist.get_order():
+        rounditem.generate_artifact()
+    
+    sourcelist: list[str] = []
+    for rounditem in roundlist.get_order():
+        if isinstance(rounditem, RoundBreak):
+            sourcelist.append(f"break_{rounditem.duration}.mp3")
+        elif isinstance(rounditem, Song):
+            sourcelist.append(rounditem.get_trimmed_name())
+        else:
+            raise ValueError(f"Unknown round item type: {type(rounditem)}")
+
+    ffmpeg_concat(sourcelist, cmd_args.artifacts_dir, cmd_args.output_path)
+    print("Success!")
 
 if __name__ == "__main__":
     main()
