@@ -17,16 +17,10 @@ class Arguments:
     multithreaded: bool
 
 def parse_arguments() -> Arguments:
-    """
-    Must handle the following usage:
-    -s, --sources The path to the sources file. Default is "test/sources.txt".
-    -a, --artifacts_dir The path of artifacts and eventual output. Default is "test/artifacts".
-    -d, --download A boolean variable whether to download the songs from sources.
-    -m, --multithreaded A boolean variable whether to multithread downloading and processing audio.
-    """
     parser = argparse.ArgumentParser(description="Process songs from a source file and optional download/processing options.")
     parser.add_argument('-s', '--sources', type=str, default='test/sources.txt',
                         help='The path to the sources file.')
+    parser.add_argument('-o', '--output', type=str, default="rounds.mp3", help="Name of the output file (must be mp3).")
     parser.add_argument('-a', '--artifacts_dir', type=str, default='test/artifacts',
                         help='The path of artifacts and eventual output.')
     parser.add_argument('-d', '--download', action=argparse.BooleanOptionalAction,
@@ -38,12 +32,9 @@ def parse_arguments() -> Arguments:
 
     args = parser.parse_args()
 
-    # Determine output file path based on artifacts_dir
-    output_path = os.path.join(args.artifacts_dir, "output.mp3")
-
     return Arguments(
         sources=args.sources,
-        output_path=output_path,
+        output_path=args.output,
         artifacts_dir=args.artifacts_dir,
         download=args.download,
         multithreaded=args.multithreaded
@@ -99,7 +90,7 @@ def main():
         download_sequential_links(songs)
 
     ffmpeg_trim(songs)
-    ffmpeg_concat(songs, f"{cmd_args.artifacts_dir}/concat.mp3")
+    ffmpeg_concat(songs, cmd_args.artifacts_dir, cmd_args.output_path)
 
 if __name__ == "__main__":
     main()

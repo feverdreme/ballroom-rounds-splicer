@@ -18,7 +18,7 @@ def ffmpeg_trim(songs: list[Song | None]) -> None:
             song.get_trimmed_path()
         ])
 
-def generate_silence(output_path: str, break_duration: str = "00:00:05") -> None:
+def generate_silence(output_path: str, break_duration: str) -> None:
     subprocess.run([
         "./ffmpeg",
         "-hide_banner", "-loglevel", "error",
@@ -30,15 +30,14 @@ def generate_silence(output_path: str, break_duration: str = "00:00:05") -> None
         output_path
     ], check=True)
 
-def ffmpeg_concat(songs: list[Song | None], output_path: str, break_duration: str = "00:00:05") -> None:
+def ffmpeg_concat(songs: list[Song | None], artifacts_path: str, output_path: str, break_duration: str = "00:00:10") -> None:
     """
     Concatenate MP3 files with breaks. None entries in songs list represent breaks.
     """
-    artifacts_dir = os.path.dirname(output_path)
     silence_path = f"silence.mp3"
-    concat_list_path = f"{artifacts_dir}/concat_list.txt"
+    concat_list_path = f"{artifacts_path}/concat_list.txt"
     
-    generate_silence(f"{artifacts_dir}/{silence_path}")
+    generate_silence(f"{artifacts_path}/{silence_path}", break_duration)
     
     # Create concat file list
     with open(concat_list_path, "w+") as f:
