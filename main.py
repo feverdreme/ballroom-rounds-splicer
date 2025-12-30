@@ -1,7 +1,4 @@
-import re
-import os
 import argparse
-from typing import Generator
 from src.download import download_sequential_links
 from src.roundlist import RoundList
 from src.song import RoundBreak, Song
@@ -26,7 +23,7 @@ def parse_arguments() -> Arguments:
                         help='The path of artifacts and eventual output.')
     parser.add_argument('-d', '--download', action=argparse.BooleanOptionalAction,
                         help='Whether to download the songs from sources.',
-                        default=False)
+                        default=True)
     parser.add_argument('-m', '--multithreaded', action=argparse.BooleanOptionalAction,
                         help='Whether to multithread downloading and processing audio.',
                         default=False)
@@ -41,11 +38,10 @@ def parse_arguments() -> Arguments:
         multithreaded=args.multithreaded
     )
 
-
-
 def main():
     cmd_args = parse_arguments()
-    roundlist = RoundList.parse_source_file(cmd_args.sources)
+    roundlist = RoundList(cmd_args.artifacts_dir)
+    roundlist.parse_source_file(cmd_args.sources)
 
     if cmd_args.download:
         download_sequential_links(roundlist.get_songs())

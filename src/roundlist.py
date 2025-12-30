@@ -36,8 +36,7 @@ class RoundList:
     def get_songs(self) -> list[Song]:
         return [item for item in self.get_order() if isinstance(item, Song)]
     
-    @staticmethod
-    def parse_source_file(source: str) -> RoundList:
+    def parse_source_file(self, source: str) -> None:
         """
         Parse a source file and return a list of links.
 
@@ -60,7 +59,6 @@ class RoundList:
         https://www.youtube.com/watch?v=dQw4w9WgXcQ
         ```
         """
-        roundlist = RoundList()
 
         spotify_youtube_regex = r'(?:https?:\/\/)?(?:www\.)?(?:(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)[\w\-]+|(?:open\.)?spotify\.com\/(?:track|album|playlist|artist|episode|show)\/[\w]+|spotify\.link\/[\w]+|spoti\.fi\/[\w]+)'
         break_regex = r'Break:\s*(\d+)'
@@ -69,13 +67,11 @@ class RoundList:
             for line in file:
                 line = line.strip()
                 if re.match(spotify_youtube_regex, line):
-                    roundlist.add_song(line)
+                    self.add_song(line)
                 elif group := re.match(break_regex, line):
                     duration = int(group.group(1))
-                    roundlist.add_break(duration)
+                    self.add_break(duration)
                 elif line.startswith("#") or len(line) == 0:
                     pass
                 else:
                     print(f"Invalid link: {line}")
-        
-        return roundlist
