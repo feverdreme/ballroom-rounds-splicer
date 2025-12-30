@@ -74,3 +74,6 @@ which will create a `rounds.mp3` file in the main directory.
 - [ ] Prevent race condition of generating multiple breaks of the same duration.
 - [ ] Make trimming concurrent.
 - [ ] Perhaps rewrite the entire code base in OCaml because `|>` is cool. 🐫
+- [ ] Add arguments for setting default song durations.
+- [ ] Add ability to specify custom song durations and starts in sources.txt
+- [ ] Add arguments for setting default song break durations.
