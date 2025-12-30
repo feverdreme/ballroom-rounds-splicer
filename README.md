@@ -62,3 +62,15 @@ python3 main.py --sources test/sources2.txt --output rounds.mp3
 ```
 
 which will create a `rounds.mp3` file in the main directory.
+
+## Future Improvements
+
+- [ ] Allow specifying an ffmpeg path and making the default behavior to call `ffmpeg`, not `./ffmpeg` as a subprocess.
+- [ ] Allow downloading playlists and packaging them as rounds automatically.
+- [ ] Allow putting playlists in a sources.txt.
+- [ ] Create a system where a song library is maintained so the tool can look up a cache of songs to refernence in sources.txt.
+- [ ] Test the tool for YouTube music.
+- [ ] Allow the user to turn off multithreading.
+- [ ] Prevent race condition of generating multiple breaks of the same duration.
+- [ ] Make trimming concurrent.
+- [ ] Perhaps rewrite the entire code base in OCaml because `|>` is cool. 🐫
