@@ -1,6 +1,4 @@
 import argparse
-import cmd
-from src.download import download_sequential_links
 from src.roundlist import RoundList
 from src.song import RoundBreak, Song
 from src.audio_processing import ffmpeg_trim, ffmpeg_concat
@@ -27,7 +25,7 @@ def parse_arguments() -> Arguments:
                         default=True)
     parser.add_argument('-m', '--multithreaded', action=argparse.BooleanOptionalAction,
                         help='Whether to multithread downloading and processing audio.',
-                        default=False)
+                        default=True)
 
     args = parser.parse_args()
 

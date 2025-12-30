@@ -25,7 +25,6 @@ def generate_silence(output_path: str, break_duration: str) -> None:
         "-i", "anullsrc=channel_layout=stereo:sample_rate=44100",
         "-t", break_duration,
         "-acodec", "libmp3lame",
-        "-n", # No overwrite
         output_path
     ]
     
