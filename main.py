@@ -13,6 +13,8 @@ class Arguments:
     download: bool
     multithreaded: bool
     ffmpeg_path: str
+    song_duration: int
+    break_duration: int
 
 def parse_arguments() -> Arguments:
     parser = argparse.ArgumentParser(description="Process songs from a source file and optional download/processing options.")
@@ -28,6 +30,8 @@ def parse_arguments() -> Arguments:
                         help='Whether to multithread downloading and processing audio.',
                         default=True)
     parser.add_argument("--ffmpeg-path", type=str, help="If manually specified, the local path of the ffmpeg binary.")
+    parser.add_argument("--song-duration", type=int, default=90, help="Duration for songs.")
+    parser.add_argument("--break-duration", type=int, default=10, help="Duration for song breaks.")
 
     args = parser.parse_args()
 
@@ -37,18 +41,25 @@ def parse_arguments() -> Arguments:
         artifacts_dir=args.artifacts_dir,
         download=args.download,
         multithreaded=args.multithreaded,
-        ffmpeg_path=args.ffmpeg_path
+        ffmpeg_path=args.ffmpeg_path,
+        song_duration=args.song_duration,
+        break_duration=args.break_duration
     )
 
 def main():
     cmd_args = parse_arguments()
-    roundlist = RoundList(artifacts_dir=cmd_args.artifacts_dir, ffmpeg_path=cmd_args.ffmpeg_path)
+    roundlist = RoundList(artifacts_dir=cmd_args.artifacts_dir, ffmpeg_path=cmd_args.ffmpeg_path, break_duration=cmd_args.break_duration)
     roundlist.parse_source_file(cmd_args.sources)
     roundlist.generate_artifacts(cmd_args.download, 10 if cmd_args.multithreaded else 1)
 
     for song in roundlist.get_songs():
-        ffmpeg_trim(song.get_path(), song.get_trimmed_path(), cmd_args.ffmpeg_path)
+        ffmpeg_trim(song.get_path(), 
+                    song.get_trimmed_path(), 
+                    ffmpeg_path=cmd_args.ffmpeg_path, 
+                    song_duration=cmd_args.song_duration
+        )
 
+    # Create the sourcelist that will be fed into ffmpeg concat
     sourcelist: list[str] = []
     for rounditem in roundlist.get_order():
         if isinstance(rounditem, RoundBreak):

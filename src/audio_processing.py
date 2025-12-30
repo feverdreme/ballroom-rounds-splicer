@@ -1,13 +1,21 @@
 import os
 import subprocess
 
-def ffmpeg_trim(source: str, dest: str, ffmpeg_path: str = "ffmpeg") -> None:
+def seconds_to_ffpmeg_time(seconds: int) -> str:
+    hours = seconds // 3600
+    minutes = (seconds % 3600) // 60
+    secs = seconds % 60
+    return f"{hours:02}:{minutes:02}:{secs:02}"
+
+def ffmpeg_trim(source: str, dest: str, ffmpeg_path: str = "ffmpeg", song_duration: int = 90) -> None:
+    ffmpeg_seconds: str = seconds_to_ffpmeg_time(song_duration)
+
     subprocess.run([
         ffmpeg_path,
         "-hide_banner", "-loglevel", "error",
         "-i", source,
         "-ss", "00:00:00",
-        "-t", "00:01:30",
+        "-t", ffmpeg_seconds,
         "-af", "afade=t=in:st=0:d=5,afade=out:st=85:d=5",
         "-y", # Overwrite
         dest
@@ -29,12 +37,6 @@ def generate_silence(output_path: str, break_duration: str, ffmpeg_path: str = "
     ]
     
     subprocess.run(args, check=True)
-
-def seconds_to_ffpmeg_time(seconds: int) -> str:
-    hours = seconds // 3600
-    minutes = (seconds % 3600) // 60
-    secs = seconds % 60
-    return f"{hours:02}:{minutes:02}:{secs:02}"
 
 def ffmpeg_concat(sourcelist: list[str], artifacts_path: str, output_path: str, ffmpeg_path: str = "ffmpeg") -> None:
     """

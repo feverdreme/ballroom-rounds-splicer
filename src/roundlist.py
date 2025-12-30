@@ -4,11 +4,15 @@ from concurrent.futures import ThreadPoolExecutor
 from src.song import RoundBreak, RoundItem, Song
 
 class RoundList:
-    def __init__(self, artifacts_dir: str = "test/artifacts", song_break: int = 10, ffmpeg_path: str = "ffmpeg"):
+    def __init__(self, 
+        artifacts_dir: str = "test/artifacts",
+        ffmpeg_path: str = "ffmpeg",
+        break_duration: int = 10
+    ):
         self.items: list[RoundItem] = []
         self.artifacts_dir = artifacts_dir
-        self.song_break = song_break
         self.ffmpeg_path = ffmpeg_path
+        self.break_duration = break_duration
     
     def add_song(self, link: str):
         self.items.append(Song(link, len(self.items), self.artifacts_dir))
@@ -28,7 +32,7 @@ class RoundList:
             if idx + 1 < len(self.items):
                 next_item = self.items[idx + 1]
                 if not isinstance(next_item, RoundBreak):
-                    result.append(RoundBreak(self.song_break, -1, self.artifacts_dir, self.ffmpeg_path))
+                    result.append(RoundBreak(self.break_duration, -1, self.artifacts_dir, self.ffmpeg_path))
             else:
                 # Last item; do not add trailing break
                 pass
