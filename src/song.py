@@ -31,9 +31,10 @@ class Song(RoundItem):
         ])
 
 class RoundBreak(RoundItem):
-    def __init__(self, duration: int, index: int, artifacts_dir):
+    def __init__(self, duration: int, index: int, artifacts_dir, ffmpeg_path: str = "ffmpeg"):
         super().__init__(index=index, artifacts_dir=artifacts_dir)
         self.duration = duration
+        self.ffmpeg_path = ffmpeg_path
 
     def get_duration(self):
         return self.duration
@@ -43,4 +44,4 @@ class RoundBreak(RoundItem):
     
     def generate_artifact(self) -> None:
         break_duration_ffmpeg_time = seconds_to_ffpmeg_time(self.duration)
-        generate_silence(self.get_path(), break_duration_ffmpeg_time)
+        generate_silence(self.get_path(), break_duration_ffmpeg_time, self.ffmpeg_path)

@@ -1,9 +1,9 @@
 import os
 import subprocess
 
-def ffmpeg_trim(source: str, dest: str) -> None:
+def ffmpeg_trim(source: str, dest: str, ffmpeg_path: str = "ffmpeg") -> None:
     subprocess.run([
-        "./ffmpeg",
+        ffmpeg_path,
         "-hide_banner", "-loglevel", "error",
         "-i", source,
         "-ss", "00:00:00",
@@ -13,13 +13,13 @@ def ffmpeg_trim(source: str, dest: str) -> None:
         dest
     ])
 
-def generate_silence(output_path: str, break_duration: str) -> None:
+def generate_silence(output_path: str, break_duration: str, ffmpeg_path: str = "ffmpeg") -> None:
     if os.path.exists(output_path):
         print(f"{output_path} already exists. Skipping...")
         return
 
     args = [
-        "./ffmpeg",
+        ffmpeg_path,
         "-hide_banner", "-loglevel", "error",
         "-f", "lavfi",
         "-i", "anullsrc=channel_layout=stereo:sample_rate=44100",
@@ -36,7 +36,7 @@ def seconds_to_ffpmeg_time(seconds: int) -> str:
     secs = seconds % 60
     return f"{hours:02}:{minutes:02}:{secs:02}"
 
-def ffmpeg_concat(sourcelist: list[str], artifacts_path: str, output_path: str) -> None:
+def ffmpeg_concat(sourcelist: list[str], artifacts_path: str, output_path: str, ffmpeg_path: str = "ffmpeg") -> None:
     """
     Concatenate MP3 files with breaks. None entries in songs list represent breaks.
     """
@@ -51,7 +51,7 @@ def ffmpeg_concat(sourcelist: list[str], artifacts_path: str, output_path: str) 
     
     # Use concat demuxer
     subprocess.run([
-        "./ffmpeg",
+        ffmpeg_path,
         "-hide_banner", "-loglevel", "error",
         "-f", "concat",
         "-safe", "0",
