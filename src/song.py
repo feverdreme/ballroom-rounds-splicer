@@ -1,3 +1,4 @@
+import subprocess
 from src.audio_processing import generate_silence, seconds_to_ffpmeg_time
 from src.rounditem import RoundItem
 
@@ -20,7 +21,14 @@ class Song(RoundItem):
         return f"{self.artifacts_dir}/{self.get_trimmed_name()}"
     
     def generate_artifact(self):
-        return super().generate_artifact()
+        subprocess.run(["spotdl", 
+            "download", 
+            self.get_link(),
+            "--format",
+            "mp3",
+            "--output",
+            self.get_path().replace("mp3", "{output-ext}")
+        ])
 
 class RoundBreak(RoundItem):
     def __init__(self, duration: int, index: int, artifacts_dir):

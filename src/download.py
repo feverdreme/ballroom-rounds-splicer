@@ -2,8 +2,7 @@ import subprocess
 from typing import Iterable
 from src.song import Song
 
-
-def download_song(song: Song) -> None:
+def download_song(song: Song):
     subprocess.run(["spotdl", 
         "download", 
         song.get_link(),

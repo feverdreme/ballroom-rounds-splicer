@@ -1,4 +1,5 @@
 import re
+from concurrent.futures import ThreadPoolExecutor
 
 from src.song import RoundBreak, RoundItem, Song
 
@@ -75,3 +76,17 @@ class RoundList:
                     pass
                 else:
                     print(f"Invalid link: {line}")
+
+    def generate_artifacts(self, download: bool, max_threads: int = 10):
+        # Create pool of jobs
+        jobs: list[RoundItem] = []
+        for rounditem in self.get_order():
+            if isinstance(rounditem, Song) and not download:
+                continue
+            jobs.append(rounditem)
+        
+        def run_job(rounditem: RoundItem):
+            rounditem.generate_artifact()
+        
+        with ThreadPoolExecutor(max_workers=max_threads) as executor:
+            executor.map(run_job, jobs)

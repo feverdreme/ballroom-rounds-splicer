@@ -1,4 +1,5 @@
 import argparse
+import cmd
 from src.download import download_sequential_links
 from src.roundlist import RoundList
 from src.song import RoundBreak, Song
@@ -42,15 +43,10 @@ def main():
     cmd_args = parse_arguments()
     roundlist = RoundList(cmd_args.artifacts_dir)
     roundlist.parse_source_file(cmd_args.sources)
-
-    if cmd_args.download:
-        download_sequential_links(roundlist.get_songs())
+    roundlist.generate_artifacts(cmd_args.download)
 
     for song in roundlist.get_songs():
         ffmpeg_trim(song.get_path(), song.get_trimmed_path())
-
-    for rounditem in roundlist.get_order():
-        rounditem.generate_artifact()
     
     sourcelist: list[str] = []
     for rounditem in roundlist.get_order():
