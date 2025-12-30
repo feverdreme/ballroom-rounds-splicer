@@ -41,7 +41,7 @@ def main():
     cmd_args = parse_arguments()
     roundlist = RoundList(cmd_args.artifacts_dir)
     roundlist.parse_source_file(cmd_args.sources)
-    roundlist.generate_artifacts(cmd_args.download)
+    roundlist.generate_artifacts(cmd_args.download, 10 if cmd_args.multithreaded else 1)
 
     for song in roundlist.get_songs():
         ffmpeg_trim(song.get_path(), song.get_trimmed_path())
